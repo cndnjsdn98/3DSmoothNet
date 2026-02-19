@@ -16,6 +16,8 @@ of the interest points neighborhood
 #include <pcl/filters/extract_indices.h>
 #include <omp.h>
 #include "core.h"
+// #include <pcl/common/eigen.h>
+// #include <pcl/kdtree/kdtree_flann.h>
 
 
 namespace po = boost::program_options;

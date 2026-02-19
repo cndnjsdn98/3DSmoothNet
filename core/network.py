@@ -15,12 +15,13 @@
 
 import numpy as np
 import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
 import glob
 import time
 import os
 import datetime
 from core import ops
-
+import pathlib
 from tqdm import trange
 
 
@@ -45,20 +46,20 @@ class NetworkBuilder(object):
 
     def _init_tensorflow(self):
         # Initialize tensorflow and let the gpu memory to grow
-        tf_config = tf.ConfigProto()
+        tf_config = tf.compat.v1.ConfigProto()
         tf_config.gpu_options.allow_growth = True
 
-        self.sess = tf.Session(config=tf_config)
+        self.sess = tf.compat.v1.Session(config=tf_config)
 
     def _build_placeholder(self):
 
         # Create placeholders for the input to the siamese network
-        self.anchor_input = tf.placeholder(dtype=tf.float32, shape=[None, int(np.cbrt(self.config.input_dim)),
+        self.anchor_input = tf.compat.v1.placeholder(dtype=tf.float32, shape=[None, int(np.cbrt(self.config.input_dim)),
                                                                     int(np.cbrt(self.config.input_dim)),
                                                                     int(np.cbrt(self.config.input_dim)), 1],
                                            name='X_reference')
 
-        self.positive_input = tf.placeholder(dtype=tf.float32, shape=[None, int(np.cbrt(self.config.input_dim)),
+        self.positive_input = tf.compat.v1.placeholder(dtype=tf.float32, shape=[None, int(np.cbrt(self.config.input_dim)),
                                                                       int(np.cbrt(self.config.input_dim)),
                                                                       int(np.cbrt(self.config.input_dim)), 1],
                                              name='X_positive')
@@ -73,7 +74,7 @@ class NetworkBuilder(object):
             raise ValueError('The training directory {} does not exist.'.format(self.config.training_data_folder))
 
             # Get name of all tfrecord files
-        training_data_files = glob.glob(self.config.training_data_folder + '*.tfrecord')
+        training_data_files = glob.glob(os.path.join(self.config.training_data_folder, '*.tfrecord'))
         nr_training_files = len(training_data_files)
         print('Number of training files: {}'.format(nr_training_files))
 
@@ -94,7 +95,7 @@ class NetworkBuilder(object):
         dataset = dataset.prefetch(self.config.batch_size * 2)
 
         # Create a one-shot iterator
-        iterator = dataset.make_one_shot_iterator()
+        iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
         self.anc_training_batch, self.pos_training_batch = iterator.get_next()
 
     def _build_model(self):
@@ -106,7 +107,7 @@ class NetworkBuilder(object):
         # Build graph
         print("Building the 3DSmoothNet graph")
 
-        self.keep_probability = tf.placeholder(tf.float32)
+        self.keep_probability = tf.compat.v1.placeholder(tf.float32)
 
         # Build network for training usinf the tf_records files
         self.anchor_output, self.positive_output = network_architecture(self.anc_training_batch,
@@ -136,27 +137,27 @@ class NetworkBuilder(object):
     def _build_optim(self):
         # Build the optimizer
         starter_learning_rate = self.config.learning_rate
-        learning_rate = tf.train.exponential_decay(starter_learning_rate, self.global_step,
+        learning_rate = tf.compat.v1.train.exponential_decay(starter_learning_rate, self.global_step,
                                                    self.config.decay_step, self.config.decay_rate,
                                                    staircase=True)
-        tf.summary.scalar('learning_rate', learning_rate)
+        tf.compat.v1.summary.scalar('learning_rate', learning_rate)
 
         # Merge all summary op
-        self.summary_op = tf.summary.merge_all()
+        self.summary_op = tf.compat.v1.summary.merge_all()
 
         # Adam optimization, with the adaptable learning_rate
-        optimizer = tf.train.AdamOptimizer(learning_rate).minimize(self.losses, global_step=self.global_step)
+        optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate).minimize(self.losses, global_step=self.global_step)
         self.optimization_parameters = [optimizer, self.losses, self.summary_op]
 
     def _build_summary(self):
         """Build summary ops."""
 
         # Merge all summary op
-        self.summary = tf.summary.merge_all()
+        self.summary = tf.compat.v1.summary.merge_all()
 
     def _build_writer(self):
-        self.saver = tf.train.Saver()
-        self.saver = tf.train.Saver(max_to_keep=self.config.max_epochs)
+        self.saver = tf.compat.v1.train.Saver()
+        self.saver = tf.compat.v1.train.Saver(max_to_keep=self.config.max_epochs)
 
         self.time_stamp_format = "%f_%S_%H_%M_%d_%m_%Y"
         time_stamp = datetime.datetime.now().strftime(self.time_stamp_format)
@@ -180,7 +181,7 @@ class NetworkBuilder(object):
             log_number = str(np.max(temp_names) + 1)
 
         tensorboard_log = self.config.log_path + '/{}_dim/'.format(self.config.output_dim) + '/run_' + log_number
-        self.writer = tf.summary.FileWriter(tensorboard_log, self.sess.graph)
+        self.writer = tf.compat.v1.summary.FileWriter(tensorboard_log, self.sess.graph)
 
     def train(self):
 
@@ -208,7 +209,7 @@ class NetworkBuilder(object):
                                                                 int(np.cbrt(self.config.input_dim)), 1))
 
         # Initialize all the variables
-        init = tf.global_variables_initializer()
+        init = tf.compat.v1.global_variables_initializer()
         self.sess.run(init)
 
         # If resume load the trained model
@@ -260,9 +261,9 @@ class NetworkBuilder(object):
             # Save the mean accuracy to the tensorboard log at the selected interval
             if (self.step + 1) % self.config.save_accuracy_rate == 0:
 
-                summary_training = tf.Summary(value=[tf.Summary.Value(tag='Training accuracy',
+                summary_training = tf.compat.v1.Summary(value=[tf.compat.v1.Summary.Value(tag='Training accuracy',
                                                                          simple_value=np.mean(training_accuracy))])
-                summary_validation = tf.Summary(value=[tf.Summary.Value(tag='Validation accuracy',
+                summary_validation = tf.compat.v1.Summary(value=[tf.compat.v1.Summary.Value(tag='Validation accuracy',
                                                                          simple_value=np.mean(validation_accuracy))])
 
                 self.writer.add_summary(summary_training, self.step)
@@ -294,19 +295,32 @@ class NetworkBuilder(object):
         # If model exists, load weights
         self.saver.restore(self.sess, model_path + model_file_name)
         print('Loaded saved model {0}.'.format(model_path + model_file_name))
-
+        
         # Check if input data exists
         if not os.path.exists(self.config.evaluate_input_folder):
             print('Evaluate input data folder {} does not exist.'.format(self.config.evaluate_input_folder))
             raise ValueError('The input data folder {} does not exist.'.format(self.config.evaluate_input_folder))
 
-        # Find all input files
-        evaluation_files = glob.glob(self.config.evaluate_input_folder + '*.csv')
 
+        # Find all input files
+        evaluation_files = glob.glob(os.path.join(self.config.evaluate_input_folder, '*.csv'))
+        print(self.config.evaluate_input_folder)
+        print(evaluation_files)
         for file in evaluation_files:
             print('Loading test file: ' + file)
-            evaluation_features = np.fromfile(file, dtype=np.float32).reshape(-1, self.config.input_dim)
 
+            print(type(file))
+            p = pathlib.Path(file)
+            raw = p.read_bytes()
+
+            a32 = np.frombuffer(raw, dtype=np.float32)
+
+            print(a32)
+            evaluation_features = a32.reshape(-1, self.config.input_dim)
+
+            
+            # evaluation_features = np.fromfile(file, dtype=np.float32).reshape(-1, self.config.input_dim)
+            
             # Reshape the feature so that they fit the input format
             evaluation_features = np.reshape(evaluation_features, newshape=(-1, int(np.cbrt(self.config.input_dim)),
                                                                             int(np.cbrt(self.config.input_dim)),

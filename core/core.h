@@ -3,6 +3,11 @@
 #define Pi 3.1415926
 #define NULL_POINTID -1
 #define TOLDI_NULL_PIXEL 100
+#pragma once
+// #include <pcl/kdtree/kdtree_flann.h>
+// #include <pcl/common/eigen.h>
+// #include <pcl/point_types.h>
+// #include <pcl/point_cloud.h>
 //
 typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudPtr;
 typedef pcl::PointXYZ PointInT;
@@ -23,7 +28,6 @@ typedef struct
 #include <pcl/surface/gp3.h>
 #include <pcl/surface/mls.h>
 #include <flann/flann.hpp>
-
 //
 typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudPtr;
 typedef pcl::PointXYZ PointT;

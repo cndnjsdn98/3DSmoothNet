@@ -18,12 +18,11 @@ from sklearn.neighbors import NearestNeighbors
 # Create lots of weights and biases & Initialize with a small positive number as we will use ReLU
 def weight(shape, layer_name, weight_initializer=None,reuse=False):
     if weight_initializer is None:
-        weight_initializer = tf.orthogonal_initializer(gain=0.6,
-                                                       seed=41,
-                                                       dtype=tf.float32)
+        weight_initializer = tf.keras.initializers.Orthogonal(gain=0.6,
+                                                       seed=41)
     with tf.name_scope(layer_name):
-        with tf.variable_scope(layer_name, reuse=reuse):
-            weights = tf.get_variable(layer_name + "_W", shape=shape,
+        with tf.compat.v1.variable_scope(layer_name, reuse=reuse):
+            weights = tf.compat.v1.get_variable(layer_name + "_W", shape=shape,
                                       dtype=tf.float32, initializer=weight_initializer)
 
     tf.summary.histogram(layer_name, weights)
@@ -34,14 +33,14 @@ def bias(shape, layer_name,reuse=False):
     bias_init = tf.constant_initializer(0.01)
 
     with tf.name_scope(layer_name):
-        with tf.variable_scope('', reuse=reuse):
-            biases = tf.get_variable(layer_name + '_b',  shape=shape,
+        with tf.compat.v1.variable_scope('', reuse=reuse):
+            biases = tf.compat.v1.get_variable(layer_name + '_b',  shape=shape,
                                      dtype=tf.float32, initializer=bias_init)  # default initialier: glorot_uniform_initializer
     return biases
 
 
 def conv3d(x,filtertype , stride, padding):
-    return tf.nn.conv3d(x, filter=filtertype, strides=[1, stride[0], stride[1], stride[2], 1], padding=padding)
+    return tf.nn.conv3d(x, filters=filtertype, strides=[1, stride[0], stride[1], stride[2], 1], padding=padding)
 
 
 def max_pool3d(x, kernel, stride, padding):
@@ -67,7 +66,7 @@ def l2_normalize(x):
 
 
 def dropout(x,dropout_rate=0.7):
-    return tf.nn.dropout(x,keep_prob=dropout_rate,noise_shape=None,seed=None,name=None)
+    return tf.nn.dropout(x,rate=dropout_rate,noise_shape=None,seed=None,name=None)
 
 
 def compute_accuracy(embeddedRefFeatures, embeddedValFeatures):
@@ -89,9 +88,9 @@ def flatten_list(l):
 
 def _parse_function(example_proto):
     inputFormat = (16,16,16,1)
-    keys_to_features = {'X': tf.FixedLenFeature(inputFormat, tf.float32),
-                        'Y': tf.FixedLenFeature(inputFormat, tf.float32)}
-    parsed_features = tf.parse_single_example(example_proto, keys_to_features)
+    keys_to_features = {'X': tf.io.FixedLenFeature(inputFormat, tf.float32),
+                        'Y': tf.io.FixedLenFeature(inputFormat, tf.float32)}
+    parsed_features = tf.io.parse_single_example(example_proto, keys_to_features)
 
     return parsed_features['X'], parsed_features['Y']
 

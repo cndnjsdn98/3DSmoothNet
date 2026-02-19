@@ -66,7 +66,7 @@ def conv_block(input_anc, input_pos, channels, dropout_flag, dropout_rate, laxer
 
     # Traditional 3D conv layer followed by batch norm and relu activation
 
-    i_size = input_anc.get_shape().as_list()[-2]/stride_input
+    i_size = int(input_anc.get_shape().as_list()[-2]/stride_input)
 
     weights = ops.weight([k_size, k_size, k_size, channels[0], channels[1]],
                          layer_name='wcnn' + str(laxer_idx+1), reuse=reuse)
@@ -102,8 +102,11 @@ def out_block(input_anc, input_pos, channels, laxer_idx, stride_input=1, k_size=
     conv_output_anc = ops.batch_norm(conv_output_anc)
     conv_output_pos = ops.batch_norm(conv_output_pos)
 
-    conv_output_anc = tf.contrib.layers.flatten(conv_output_anc)
-    conv_output_pos = tf.contrib.layers.flatten(conv_output_pos)
+    # conv_output_anc = tf.contrib.layers.flatten(conv_output_anc)
+    # conv_output_pos = tf.contrib.layers.flatten(conv_output_pos)
+    conv_output_anc = tf.reshape(conv_output_anc, [tf.shape(conv_output_anc)[0], -1])
+    conv_output_pos = tf.reshape(conv_output_pos, [tf.shape(conv_output_pos)[0], -1])
+
 
     return conv_output_anc, conv_output_pos
 
