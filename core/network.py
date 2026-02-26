@@ -32,8 +32,11 @@ class NetworkBuilder(object):
         self.config = config
 
         # Initialize tensorflow session
+        start = time.time()
         self._init_tensorflow()
-
+        end = time.time()
+        print('tensorflow initialized in {0} seconds.'.format(end - start))
+        start = time.time()
         # Build the network
         self._build_placeholder()
         self._build_data_loader()
@@ -42,13 +45,21 @@ class NetworkBuilder(object):
         self._build_optim()
         self._build_summary()
         self._build_writer()
+        end = time.time()
+        print('class initialized in {0} seconds.'.format(end - start))
 
     def _init_tensorflow(self):
         # Initialize tensorflow and let the gpu memory to grow
+        tf.logging.set_verbosity(tf.logging.INFO)
         tf_config = tf.ConfigProto()
         tf_config.gpu_options.allow_growth = True
-
+        tf_config.allow_soft_placement = True
         self.sess = tf.Session(config=tf_config)
+        from tensorflow.python.client import device_lib
+        devs = device_lib.list_local_devices()
+        print("num devices:", len(devs))
+        for d in devs:
+            print(d.name, d.device_type)
 
     def _build_placeholder(self):
 
@@ -182,6 +193,15 @@ class NetworkBuilder(object):
         tensorboard_log = self.config.log_path + '/{}_dim/'.format(self.config.output_dim) + '/run_' + log_number
         self.writer = tf.summary.FileWriter(tensorboard_log, self.sess.graph)
 
+    def __warmup(self, s, batch_size, num_iters=3):
+        # s = int(np.cbrt(input_dim))
+        dummy = np.zeros((batch_size, s, s, s, 1), dtype=np.float32)
+        for _ in range(num_iters):
+            _ = self.sess.run(
+                self.test_anchor_output,
+                feed_dict={self.anchor_input: dummy, self.keep_probability: 1.0},
+            )
+
     def train(self):
 
         # Initialize variables for accuracy values
@@ -292,30 +312,43 @@ class NetworkBuilder(object):
             raise ValueError('The model {} does not exist.'.format(model_path + model_file_name + '.index'))
 
         # If model exists, load weights
+        start = time.time()
         self.saver.restore(self.sess, model_path + model_file_name)
+        end = time.time()
         print('Loaded saved model {0}.'.format(model_path + model_file_name))
+        print('model loaded in {0} seconds.'.format(end - start))
+        # s = int(np.cbrt(self.config.input_dim))
+        # # after session init + restore
+        # self.__warmup(s, self.config.evaluation_batch_size, num_iters=3)
+        
 
         # Check if input data exists
         if not os.path.exists(self.config.evaluate_input_folder):
             print('Evaluate input data folder {} does not exist.'.format(self.config.evaluate_input_folder))
             raise ValueError('The input data folder {} does not exist.'.format(self.config.evaluate_input_folder))
 
+
         # Find all input files
         evaluation_files = glob.glob(self.config.evaluate_input_folder + '*.csv')
 
         for file in evaluation_files:
             print('Loading test file: ' + file)
+            start = time.time()
             evaluation_features = np.fromfile(file, dtype=np.float32).reshape(-1, self.config.input_dim)
-
+            end = time.time()
+            print('evaluation features loaded in {0} seconds.'.format(end - start))
             # Reshape the feature so that they fit the input format
             evaluation_features = np.reshape(evaluation_features, newshape=(-1, int(np.cbrt(self.config.input_dim)),
                                                                             int(np.cbrt(self.config.input_dim)),
                                                                             int(np.cbrt(self.config.input_dim)), 1))
 
             # Generate batches for one epoch
+            start = time.time()
             batches = ops.batch_iter(list(evaluation_features), self.config.evaluation_batch_size, 1, shuffle=False)
             all_predictions = []
             cnt = 0
+            end = time.time()
+            print('batch iterator generated in {0} seconds.'.format(end - start))
 
             start = time.time()
             for x_test_batch in batches:

@@ -1,0 +1,94 @@
+wonoo@wonoo-Precision-5570:~/battery_auto_disassembly/3DSmoothNet$ ./run-demo-bunny.sh
+non-network local connections being added to access control list
+rm: cannot remove './data/bunny/32_dim/*': No such file or directory
+Config parameters successfully read in!! 
+
+File: ./data/bunny/bun_zipper_res3.ply
+Number of Points: 1889
+Size of the voxel grid: 0.02
+Number of Voxels: 16
+Smoothing Kernel: 0.01
+Number of keypoints:48
+
+Starting SDV computation!
+20 threads will be used!!
+Saving Features to a CSV file:
+./data/bunny/sdv/bun_zipper_res3.ply_0.010000_16_0.010000.csv
+
+---------------------------------------------------------
+LRF computation took 1 miliseconds
+SDV computation took 38 miliseconds
+---------------------------------------------------------
+Config parameters successfully read in!! 
+
+File: ./data/bunny/bun_zipper_res3_noise.ply
+Number of Points: 1889
+Size of the voxel grid: 0.02
+Number of Voxels: 16
+Smoothing Kernel: 0.01
+Number of keypoints:48
+
+Starting SDV computation!
+20 threads will be used!!
+Saving Features to a CSV file:
+./data/bunny/sdv/bun_zipper_res3_noise.ply_0.010000_16_0.010000.csv
+
+---------------------------------------------------------
+LRF computation took 16 miliseconds
+SDV computation took 21 miliseconds
+---------------------------------------------------------
+Input parametrization complete. Start inference
+/opt/conda/lib/python3.5/site-packages/tensorflow/python/framework/dtypes.py:523: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint8 = np.dtype([("qint8", np.int8, 1)])
+/opt/conda/lib/python3.5/site-packages/tensorflow/python/framework/dtypes.py:524: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint8 = np.dtype([("quint8", np.uint8, 1)])
+/opt/conda/lib/python3.5/site-packages/tensorflow/python/framework/dtypes.py:525: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint16 = np.dtype([("qint16", np.int16, 1)])
+/opt/conda/lib/python3.5/site-packages/tensorflow/python/framework/dtypes.py:526: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint16 = np.dtype([("quint16", np.uint16, 1)])
+/opt/conda/lib/python3.5/site-packages/tensorflow/python/framework/dtypes.py:527: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint32 = np.dtype([("qint32", np.int32, 1)])
+/opt/conda/lib/python3.5/site-packages/tensorflow/python/framework/dtypes.py:532: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  np_resource = np.dtype([("resource", np.ubyte, 1)])
+The version of TF is 1.10.0
+2026-02-24 22:57:08.226736: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2026-02-24 22:57:08.413100: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:897] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2026-02-24 22:57:08.414487: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1405] Found device 0 with properties: 
+name: NVIDIA RTX A2000 8GB Laptop GPU major: 8 minor: 6 memoryClockRate(GHz): 1.177
+pciBusID: 0000:01:00.0
+totalMemory: 7.69GiB freeMemory: 7.58GiB
+2026-02-24 22:57:08.414497: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1484] Adding visible gpu devices: 0
+2026-02-24 22:59:46.172643: I tensorflow/core/common_runtime/gpu/gpu_device.cc:965] Device interconnect StreamExecutor with strength 1 edge matrix:
+2026-02-24 22:59:46.172671: I tensorflow/core/common_runtime/gpu/gpu_device.cc:971]      0 
+2026-02-24 22:59:46.172676: I tensorflow/core/common_runtime/gpu/gpu_device.cc:984] 0:   N 
+2026-02-24 22:59:46.174831: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1097] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 7298 MB memory) -> physical GPU (device: 0, name: NVIDIA RTX A2000 8GB Laptop GPU, pci bus id: 0000:01:00.0, compute capability: 8.6)
+2026-02-24 22:59:46.181071: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1484] Adding visible gpu devices: 0
+2026-02-24 22:59:46.181100: I tensorflow/core/common_runtime/gpu/gpu_device.cc:965] Device interconnect StreamExecutor with strength 1 edge matrix:
+2026-02-24 22:59:46.181105: I tensorflow/core/common_runtime/gpu/gpu_device.cc:971]      0 
+2026-02-24 22:59:46.181108: I tensorflow/core/common_runtime/gpu/gpu_device.cc:984] 0:   N 
+2026-02-24 22:59:46.181141: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1097] Created TensorFlow device (/device:GPU:0 with 7298 MB memory) -> physical GPU (device: 0, name: NVIDIA RTX A2000 8GB Laptop GPU, pci bus id: 0000:01:00.0, compute capability: 8.6)
+num devices: 2
+/device:CPU:0 CPU
+/device:GPU:0 GPU
+tensorflow initialized in 157.96031212806702 seconds.
+Number of training files: 0
+Building the 3DSmoothNet graph
+/opt/conda/lib/python3.5/site-packages/tensorflow/python/ops/gradients_impl.py:108: UserWarning: Converting sparse IndexedSlices to a dense Tensor of unknown shape. This may consume a large amount of memory.
+  "Converting sparse IndexedSlices to a dense Tensor of unknown shape. "
+class initialized in 6.279803514480591 seconds.
+Run mode "test" selected.
+INFO:tensorflow:Restoring parameters from ./models/32_dim/3DSmoothNet_32_dim.ckpt
+Loaded saved model ./models/32_dim/3DSmoothNet_32_dim.ckpt.
+model loaded in 0.30389881134033203 seconds.
+Loading test file: ./data/bunny/sdv/bun_zipper_res3.ply_0.010000_16_0.010000.csv
+evaluation features loaded in 0.00034809112548828125 seconds.
+batch iterator generated in 2.5272369384765625e-05 seconds.
+48 features computed in 744.5436503887177 seconds.
+Wrote file bun_zipper_res3.ply_0.010000_16_0.010000_3DSmoothNet.npz
+Loading test file: ./data/bunny/sdv/bun_zipper_res3_noise.ply_0.010000_16_0.010000.csv
+evaluation features loaded in 0.0001513957977294922 seconds.
+batch iterator generated in 9.059906005859375e-06 seconds.
+48 features computed in 0.03621792793273926 seconds.
+Wrote file bun_zipper_res3_noise.ply_0.010000_16_0.010000_3DSmoothNet.npz
+Inference completed perform nearest neighbor search and registration
+non-network local connections being removed from access control list

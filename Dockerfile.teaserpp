@@ -1,0 +1,83 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+# --- System deps (build tools + TEASER++ deps + common Open3D runtime libs) ---
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl git \
+    build-essential cmake ninja-build pkg-config \
+    libeigen3-dev libboost-all-dev \
+    # Open3D import/runtime tends to need OpenGL + X/GLib libs even if mostly headless
+    libgl1 libglib2.0-0 libx11-6 libxext6 libsm6 libxrender1 \
+    libgl1-mesa-glx libglu1-mesa libxi6 \
+    libxcursor1 libxinerama1 libxrandr2 \
+    libsm6 mesa-utils libglfw3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- Miniconda (Python 3.11 environment) ---
+ENV CONDA_DIR=/opt/conda
+ENV PATH="${CONDA_DIR}/bin:${PATH}"
+ARG MINICONDA=Miniconda3-py310_24.7.1-0-Linux-x86_64.sh
+
+RUN curl -fsSL -o /tmp/miniconda.sh "https://repo.anaconda.com/miniconda/${MINICONDA}" && \
+    bash /tmp/miniconda.sh -b -p "${CONDA_DIR}" && \
+    rm -f /tmp/miniconda.sh && \
+    conda config --system --set auto_update_conda false && \
+    conda clean -afy
+
+ARG CONDA_ENV=py311
+RUN conda create -y -n "${CONDA_ENV}" python=3.11 pip && conda clean -afy
+ENV PATH="${CONDA_DIR}/envs/${CONDA_ENV}/bin:${PATH}"
+
+# --- Python deps (Open3D + basics) ---
+RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    python -m pip install --no-cache-dir numpy open3d eigen scikit-learn \
+                                         cmake>=3.16 ninja \
+                                         "scikit-build-core>=0.5" pybind11
+
+# --- Build & install TEASER++ Python bindings ---
+# TEASER++ instructions: configure, build teaserpp_python, then pip install from build/python. :contentReference[oaicite:2]{index=2}
+ARG TEASER_REF=master
+RUN git clone --depth 1 --branch "${TEASER_REF}" https://github.com/MIT-SPARK/TEASER-plusplus.git /TEASER-plusplus && \
+    python -m pip install --no-cache-dir --no-build-isolation ./TEASER-plusplus && \
+    python -c "import teaserpp_python; print('teaserpp_python OK')" && \
+    python -c "import open3d as o3d; print('open3d OK', o3d.__version__)"
+
+WORKDIR /workspace
+
+CMD ["python", "-c", "import open3d as o3d; import teaserpp_python; print('OK')"]
+# (Optional) set a workdir if you want a consistent place for your stuff
+# WORKDIR /workspace
+
+# Use bash so conda activation/conda run behaves consistently in RUN steps
+# SHELL ["/bin/bash", "-lc"]
+
+# # Create Python 3.11 env for TEASER++
+
+# RUN pip install --no-cache-dir \
+#       python=3.10 pip \
+#       \
+#       eigen scikit-learn \
+#       open3d \
+#       libstdcxx-ng \
+#       gcc_linux-64 gxx_linux-64 && \
+#     ${CONDA310_DIR}/bin/conda clean -afy
+
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     build-essential pkg-config && \
+#     rm -rf /var/lib/apt/lists/*
+
+# # Install TEASER++ into that env
+# RUN git clone --depth 1 https://github.com/MIT-SPARK/TEASER-plusplus.git TEASER-plusplus && \
+#     ${CONDA310_DIR}/bin/conda run -n py310 python -m pip install --no-cache-dir -U pip setuptools wheel && \
+#     ${CONDA310_DIR}/bin/conda run -n py310 python -m pip install --no-cache-dir \
+#         "scikit-build-core>=0.5" pybind11 && \
+#     CC=${CONDA310_DIR}/envs/py310/bin/x86_64-conda-linux-gnu-gcc \
+#     CXX=${CONDA310_DIR}/envs/py310/bin/x86_64-conda-linux-gnu-g++ \
+#     CMAKE_ARGS="-DCMAKE_C_COMPILER=${CONDA310_DIR}/envs/py310/bin/x86_64-conda-linux-gnu-gcc -DCMAKE_CXX_COMPILER=${CONDA310_DIR}/envs/py310/bin/x86_64-conda-linux-gnu-g++" \
+#     ${CONDA310_DIR}/bin/conda run -n py310 python -m pip install --no-cache-dir --no-build-isolation ./TEASER-plusplus
+
+
+# Default command
+# CMD ["bash"]

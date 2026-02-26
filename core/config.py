@@ -14,13 +14,52 @@ import argparse
 
 
 arg_lists = []
-parser = argparse.ArgumentParser()
-
+parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
 
 def add_argument_group(name):
     arg = parser.add_argument_group(name)
     arg_lists.append(arg)
     return arg
+
+# -----------------------------------------------------------------------------
+# Keypoints
+keypoint_arg = add_argument_group("Keypoints")
+keypoint_arg.add_argument("--input_pcl_folder", type=str, default="./data/bunny/")
+keypoint_arg.add_argument("--salient_factor", type=float, default=6.0)
+keypoint_arg.add_argument("--nonmax_factor", type=float, default=2.0)
+keypoint_arg.add_argument("--gamma_21", type=float, default=0.975)
+keypoint_arg.add_argument("--gamma_32", type=float, default=0.975)
+keypoint_arg.add_argument("--min_neighbors", type=int, default=5)
+
+# -----------------------------------------------------------------------------
+# TEASER++
+teaserpp_arg = add_argument_group("Teaser++")
+teaserpp_arg.add_argument("--cbar2", type=float, default=1, 
+                          help ="square of maximum ratio between noise and noise bound (set to 1 by default).")
+teaserpp_arg.add_argument("--noise_bound", type=float, default=0.03,
+                          help="maximum bound on noise (depends on the data, default to 0.03).")
+teaserpp_arg.add_argument("--estimate_scaling", action='store_true', 
+                          help=" true if scale needs to be estimated, false otherwise (default to true).")
+teaserpp_arg.add_argument("--rotation_estimation_algorithm", type=int, default=0,
+                          help="0 for GNC-TLS, 1 for FGR (default to 0).")
+teaserpp_arg.add_argument("--rotation_gnc_factor", type=float, default=1.4,
+                          help= ("factor for increasing/decreasing the GNC function control parameter (default to 1.4):" 
+                            "for GNC-TLS method: it’s multiplied on the GNC control parameter." 
+                            "for FGR method: it’s divided on the GNC control parameter." ))
+teaserpp_arg.add_argument("--rotation_max_iterations", type=int, default=100,
+                          help="maximum iterations for the GNC-TLS/FGR loop (default to 100).")
+teaserpp_arg.add_argument("--rotation_cost_threshold", type=float, default=0.005,
+                          help="cost threshold for FGR termination (default to 0.005).")
+teaserpp_arg.add_argument("--visualize", action='store_true')
+# -----------------------------------------------------------------------------
+# Input parametrization
+voxel_arg = add_argument_group("Parametrization")
+voxel_arg.add_argument("--voxel_grid", type=float, default=0.15,
+                       help="Half size of the voxel grid in the unit of the point cloud. Defaults to 0.15.")
+voxel_arg.add_argument("--n_voxels", type=int, default=16,
+                       help="Number of voxels in a side of the grid. Whole grid is nxnxn. Defaults to 16.")
+voxel_arg.add_argument("--gaussian_width", type=float, default=1.75,
+                       help="Width of the Gaussia kernel used for smoothing. Defaults to 1.75.")
 
 
 # -----------------------------------------------------------------------------

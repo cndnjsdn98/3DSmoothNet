@@ -1,0 +1,96 @@
+# Start from the existing image
+FROM craigleili/3dlocalmultiviewdesc:3dsmoothnet
+
+# (Optional) set a workdir if you want a consistent place for your stuff
+WORKDIR /workspace
+
+
+# This base image already has conda at /opt/conda and base python=3.5.
+ENV CONDA_DIR=/opt/conda
+ENV PATH=${CONDA_DIR}/bin:${PATH}
+
+# Use bash so conda activation/conda run behaves consistently in RUN steps
+SHELL ["/bin/bash", "-lc"]
+
+# install extra Python packages
+RUN ${CONDA_DIR}/bin/python -m pip install --no-cache-dir \
+    numpy \
+    open3d==0.9.0
+
+# Install prerequisits for PCL
+RUN apt-get update && apt-get install -y --no-install-recommends \
+                       g++ \
+                       cmake cmake-gui \
+                       doxygen \
+                       mpi-default-dev openmpi-bin openmpi-common \
+                       libflann1.8 libflann-dev \
+                       libeigen3-dev \
+                       libboost-all-dev \
+                       libvtk6-dev libvtk6.2 libvtk6.2-qt \
+                       'libqhull*' \
+                       libusb-dev \
+                       libgtest-dev \
+                       git-core freeglut3-dev pkg-config \
+                       build-essential libxmu-dev libxi-dev \
+                       libusb-1.0-0-dev graphviz mono-complete \
+                       phonon-backend-gstreamer \
+                       phonon-backend-vlc \
+                       libopenni-dev libopenni2-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install PCL-1.8.1
+RUN git clone --branch pcl-1.8.1 https://github.com/PointCloudLibrary/pcl.git pcl-trunk && \
+    ln -s pcl-trunk pcl && \
+    cd pcl && \
+    mkdir -p release && \
+    cd release && \
+    cmake -DCMAKE_BUILD_TYPE=None -DBUILD_GPU=OFF -DBUILD_apps=ON -DBUILD_examples=ON .. && \
+    make -j"$(nproc)" && \
+    make install && \
+    ldconfig
+
+
+# --- Install a second, modern conda stack in a separate prefix (/opt/conda310)
+SHELL ["/bin/bash", "-lc"]
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates curl bzip2 && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV CONDA310_DIR=/opt/conda310
+
+RUN curl -fsSL -o /tmp/miniforge.sh \
+      https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh && \
+    bash /tmp/miniforge.sh -b -p ${CONDA310_DIR} && \
+    rm -f /tmp/miniforge.sh
+
+# Create Python 3.10 env for TEASER++
+RUN ${CONDA310_DIR}/bin/conda create -y -n py310 -c conda-forge \
+      python=3.10 pip \
+      "cmake>=3.16,<4" ninja \
+      eigen scikit-learn \
+      open3d \
+      libstdcxx-ng \
+      gcc_linux-64 gxx_linux-64 && \
+    ${CONDA310_DIR}/bin/conda clean -afy
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential pkg-config && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install TEASER++ into that env
+RUN git clone --depth 1 https://github.com/MIT-SPARK/TEASER-plusplus.git TEASER-plusplus && \
+    ${CONDA310_DIR}/bin/conda run -n py310 python -m pip install --no-cache-dir -U pip setuptools wheel && \
+    ${CONDA310_DIR}/bin/conda run -n py310 python -m pip install --no-cache-dir \
+        "scikit-build-core>=0.5" pybind11 && \
+    CC=${CONDA310_DIR}/envs/py310/bin/x86_64-conda-linux-gnu-gcc \
+    CXX=${CONDA310_DIR}/envs/py310/bin/x86_64-conda-linux-gnu-g++ \
+    CMAKE_ARGS="-DCMAKE_C_COMPILER=${CONDA310_DIR}/envs/py310/bin/x86_64-conda-linux-gnu-gcc -DCMAKE_CXX_COMPILER=${CONDA310_DIR}/envs/py310/bin/x86_64-conda-linux-gnu-g++" \
+    ${CONDA310_DIR}/bin/conda run -n py310 python -m pip install --no-cache-dir --no-build-isolation ./TEASER-plusplus
+
+# Make conda activation available in interactive shells (optional but convenient)
+RUN ln -sf ${CONDA310_DIR}/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+    echo 'source /etc/profile.d/conda.sh' >> /etc/bash.bashrc
+
+# Default command
+CMD ["bash"]
