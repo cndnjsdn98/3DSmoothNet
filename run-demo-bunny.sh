@@ -14,6 +14,7 @@ cd -- "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 #   -w /workspace/3dsmoothnet \
 #   teaserpp:0.0.1 \
 #   python ./compute_keypoints.py
+python ./compute_keypoints.py
 
 docker run --rm -it \
   --gpus all \
@@ -35,5 +36,6 @@ docker run --rm -it \
 #   -w /workspace/3dsmoothnet \
 #   teaserpp:0.0.1 \
 #   python ./perform_teaserpp.py
+python ./perform_teaserpp.py
 
 xhost -local:

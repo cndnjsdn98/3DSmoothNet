@@ -50,47 +50,5 @@ RUN git clone --branch pcl-1.8.1 https://github.com/PointCloudLibrary/pcl.git pc
     ldconfig
 
 
-# --- Install a second, modern conda stack in a separate prefix (/opt/conda310)
-SHELL ["/bin/bash", "-lc"]
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      ca-certificates curl bzip2 && \
-    rm -rf /var/lib/apt/lists/*
-
-ENV CONDA310_DIR=/opt/conda310
-
-RUN curl -fsSL -o /tmp/miniforge.sh \
-      https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh && \
-    bash /tmp/miniforge.sh -b -p ${CONDA310_DIR} && \
-    rm -f /tmp/miniforge.sh
-
-# Create Python 3.10 env for TEASER++
-RUN ${CONDA310_DIR}/bin/conda create -y -n py310 -c conda-forge \
-      python=3.10 pip \
-      "cmake>=3.16,<4" ninja \
-      eigen scikit-learn \
-      open3d \
-      libstdcxx-ng \
-      gcc_linux-64 gxx_linux-64 && \
-    ${CONDA310_DIR}/bin/conda clean -afy
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential pkg-config && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install TEASER++ into that env
-RUN git clone --depth 1 https://github.com/MIT-SPARK/TEASER-plusplus.git TEASER-plusplus && \
-    ${CONDA310_DIR}/bin/conda run -n py310 python -m pip install --no-cache-dir -U pip setuptools wheel && \
-    ${CONDA310_DIR}/bin/conda run -n py310 python -m pip install --no-cache-dir \
-        "scikit-build-core>=0.5" pybind11 && \
-    CC=${CONDA310_DIR}/envs/py310/bin/x86_64-conda-linux-gnu-gcc \
-    CXX=${CONDA310_DIR}/envs/py310/bin/x86_64-conda-linux-gnu-g++ \
-    CMAKE_ARGS="-DCMAKE_C_COMPILER=${CONDA310_DIR}/envs/py310/bin/x86_64-conda-linux-gnu-gcc -DCMAKE_CXX_COMPILER=${CONDA310_DIR}/envs/py310/bin/x86_64-conda-linux-gnu-g++" \
-    ${CONDA310_DIR}/bin/conda run -n py310 python -m pip install --no-cache-dir --no-build-isolation ./TEASER-plusplus
-
-# Make conda activation available in interactive shells (optional but convenient)
-RUN ln -sf ${CONDA310_DIR}/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
-    echo 'source /etc/profile.d/conda.sh' >> /etc/bash.bashrc
-
 # Default command
 CMD ["bash"]

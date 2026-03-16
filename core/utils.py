@@ -37,10 +37,10 @@ def iss_keypoints_to_indices(pcd: o3d.geometry.PointCloud,
 
 
 
-def keypoints_to_spheres(keypoints, sphere_color):
+def keypoints_to_spheres(keypoints, sphere_color, radius=0.01):
     spheres = o3d.geometry.TriangleMesh()
     for keypoint in keypoints.points:
-        sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.01)
+        sphere = o3d.geometry.TriangleMesh.create_sphere(radius=radius)
         sphere.translate(keypoint)
         spheres += sphere
     spheres.paint_uniform_color(sphere_color)
@@ -58,7 +58,6 @@ def draw_registration_result(source, target, transformation, FRAG1_COLOR=None, F
     target_temp.paint_uniform_color(FRAG2_COLOR)
     source_temp.transform(transformation)
     o3d.visualization.draw_geometries([source_temp, target_temp])
-
 
 ################ RANSAC ##################
 def execute_global_registration(
@@ -101,8 +100,8 @@ def compute_transformation_diff(est_mat, gt_mat):
     R_est = est_mat[:3,:3]
     rot_error = get_angular_error(R_gt, R_est)
 
-    t_gt = gt_mat[:,-1]
-    t_est = est_mat[:,-1]
+    t_gt = gt_mat[:-1,-1]
+    t_est = est_mat[:-1,-1]
     trans_error = np.linalg.norm(t_gt - t_est)
 
     return rot_error, trans_error

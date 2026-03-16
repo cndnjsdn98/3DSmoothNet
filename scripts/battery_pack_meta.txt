@@ -1,0 +1,4 @@
+--evaluate_input_folder=./data/battery_pack_test_04/sdv/
+--evaluate_output_folder=./data/battery_pack_test_04/
+--input_pcl_folder=./data/battery_pack_test_04/
+--visualize

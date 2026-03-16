@@ -43,43 +43,34 @@ OUTLIER_TRANSLATION_UB = 0.05
 
 def main():
     # Run the input parametrization
-    point_cloud_files = ["./data/bunny/bun_zipper_res3.ply", "./data/bunny/bun_zipper_res3_noise.ply"]
-    keypoints_files = ["./data/bunny/bun_zipper_res3.ply_keypoints", "./data/bunny/bun_zipper_res3_noise.ply_keypoints"]
+    point_cloud_files = ["./data/battery_pack/battery_pack.ply", "./data/battery_pack/battery_pack_test.ply"]
+    keypoints_files = ["./data/battery_pack/battery_pack.ply_keypoints", "./data/battery_pack/battery_pack_test.ply_keypoints"]
 
     # Load reference point cloud
-    reference_pc = o3d.io.read_point_cloud(point_cloud_files[0])
-    # Create test point cloud by transforming and inducing noise
-    test_pc = o3d.io.read_point_cloud(point_cloud_files[0])
-    T = np.array(
-    [[9.96926560e-01, 6.68735757e-02, -4.06664421e-02, -1.15576939e-01],
-    [-6.61289946e-02, 9.97617877e-01, 1.94008687e-02, -3.87705398e-02],
-    [4.18675510e-02, -1.66517807e-02, 9.98977765e-01, 1.14874890e-01],
-    [0, 0, 0, 1]])
-    
-    # # Clear evaluate folders
-    args = "rm ./data/bunny/sdv/*.csv ./data/bunny/32_dim/*"
+    # Clear evaluate folders
+    args = "rm ./data/battery_pack/sdv/*.csv ./data/battery_pack/32_dim/*"
     subprocess.call(args, shell=True)
 
     voxel_grid = 0.01 # Half size of the voxel grid in the unit of the point cloud. Defaults to 0.15.
     n_voxels = 16 # Number of voxels in a side of the grid. Whole grid is nxnxn. Defaults to 16.
     gaussian_width = 0.01 # Width of the Gaussia kernel used for smoothing. Defaults to 1.75.
     for i in range(0,len(point_cloud_files)):
-        args = "./3DSmoothNet -f " + point_cloud_files[i] + " -k " + keypoints_files[i] + " -o ./data/bunny/sdv/ -r " + str(voxel_grid) + " -n " + str(n_voxels) + " -h " + str(gaussian_width)
+        args = "./3DSmoothNet -f " + point_cloud_files[i] + " -k " + keypoints_files[i] + " -o ./data/battery_pack/sdv/ -r " + str(voxel_grid) + " -n " + str(n_voxels) + " -h " + str(gaussian_width)
         subprocess.call(args, shell=True)
 
     print('Input parametrization complete. Start inference')
 
     # Run the inference as shell 
-    args = "python main_cnn.py --run_mode=test --evaluate_input_folder=./data/bunny/sdv/  --evaluate_output_folder=./data/bunny --input_dim=" + str(n_voxels**3) + " @./cnn_config.txt"
+    args = "python main_cnn.py --run_mode=test --evaluate_input_folder=./data/battery_pack/sdv/  --evaluate_output_folder=./data/battery_pack --input_dim=" + str(n_voxels**3) + " @./cnn_config.txt"
     subprocess.call(args, shell=True)
 
     print('Inference completed perform nearest neighbor search and registration')
 
     # # Load the descriptors and estimate the transformation parameters using RANSAC
-    # reference_desc = np.load('./data/bunny/32_dim/bun_zipper_res3.ply_{:.6f}_{}_{:.6f}_3DSmoothNet.npz'.format(voxel_grid, n_voxels, gaussian_width))
+    # reference_desc = np.load('./data/battery_pack/32_dim/bun_zipper_res3.ply_{:.6f}_{}_{:.6f}_3DSmoothNet.npz'.format(voxel_grid, n_voxels, gaussian_width))
     # reference_desc = reference_desc['data']
 
-    # test_desc = np.load('./data/bunny/32_dim/bun_zipper_res3_noise.ply_{:.6f}_{}_{:.6f}_3DSmoothNet.npz'.format(voxel_grid, n_voxels, gaussian_width))
+    # test_desc = np.load('./data/battery_pack/32_dim/bun_zipper_res3_noise.ply_{:.6f}_{}_{:.6f}_3DSmoothNet.npz'.format(voxel_grid, n_voxels, gaussian_width))
     # test_desc = test_desc['data']
 
     # # Save as open3d feature 

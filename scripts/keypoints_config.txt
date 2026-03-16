@@ -1,0 +1,5 @@
+--salient_factor=6
+--nonmax_factor=6
+--gamma_21=0.975
+--gamma_32=0.975
+--min_neighbors=20

@@ -1,3 +1,0 @@
---voxel_grid=0.01 
---n_voxels=16 
---gaussian_width=0.01

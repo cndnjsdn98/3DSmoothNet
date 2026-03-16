@@ -329,7 +329,7 @@ class NetworkBuilder(object):
 
 
         # Find all input files
-        evaluation_files = glob.glob(self.config.evaluate_input_folder + '*.csv')
+        evaluation_files = glob.glob(self.config.evaluate_input_folder + '*{:.6f}_{}_{:.6f}.csv'.format(self.config.voxel_grid, self.config.n_voxels, self.config.gaussian_width))
 
         for file in evaluation_files:
             print('Loading test file: ' + file)
@@ -375,8 +375,16 @@ class NetworkBuilder(object):
             evaluate_file_name = file.split('/')[-1]
 
             # Save 3DSmoothNet descriptors as *.npz and *.txt
-            np.savez_compressed(self.config.evaluate_output_folder + '/{}_dim/'.format(self.config.output_dim) +
-                                evaluate_file_name[:-4] + '_3DSmoothNet.npz', data=all_predictions)
+            print("Saving predictions...")
+            print("shape:", all_predictions.shape)
+            print("dtype:", all_predictions.dtype)
+            print("size (MB):", all_predictions.nbytes / (1024**2))
+            out_path = (self.config.evaluate_output_folder + '/{}_dim/'.format(self.config.output_dim) +
+                        evaluate_file_name[:-4] + '_3DSmoothNet.npy')
+            np.save(out_path, all_predictions)
+
+            # np.savez_compressed(self.config.evaluate_output_folder + '/{}_dim/'.format(self.config.output_dim) +
+            #                     evaluate_file_name[:-4] + '_3DSmoothNet.npz', data=all_predictions)
 
             np.savetxt(self.config.evaluate_output_folder + '/{}_dim/'.format(self.config.output_dim) +
                        evaluate_file_name[:-4] + '_3DSmoothNet.txt', all_predictions, delimiter=',', encoding=None)

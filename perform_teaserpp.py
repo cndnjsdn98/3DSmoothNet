@@ -19,11 +19,11 @@ import os
 import numpy as np
 import open3d as o3d
 import glob
-import pickle
+import copy 
 
 from core import config
 from core.utils import compute_transformation_diff, draw_registration_result, \
-                       keypoints_to_spheres
+                       keypoints_to_spheres, estimate_spacing
 from core.teaserpp_utils import find_mutually_nn_keypoints, \
                                 execute_teaser_global_registration
 
@@ -42,7 +42,8 @@ OUTLIER_TRANSLATION_LB = 0.001
 OUTLIER_TRANSLATION_UB = 0.05
 
 def main(config_arguments):
-    point_cloud_files = glob.glob(config_arguments.input_pcl_folder + '*.ply')
+    print("\n-----------------------")
+    point_cloud_files = glob.glob(os.path.join(config_arguments.input_pcl_folder, "subsampled", '*.ply'))
     if len(point_cloud_files) != 2:
         print("Check Number of files in {}. There should be 2 .ply files".format(config_arguments.input_pcl_folder))
         return
@@ -53,26 +54,26 @@ def main(config_arguments):
     ref_file_name = os.path.split(point_cloud_files[0])
     test_file_name = os.path.split(point_cloud_files[1])
     # Input parametrization
-    gt_file = os.path.join(config_arguments.input_pcl_folder, 'gt.pkl')
-    with open(gt_file, 'rb') as f:
-        gt = pickle.load(f)
-    T = gt['T']
-    meta_file = os.path.join(config_arguments.input_pcl_folder, 'meta.pkl')
-    with open(meta_file, 'rb') as f:
-        meta = pickle.load(f)
-    voxel_grid = meta['voxel_grid'] # Half size of the voxel grid in the unit of the point cloud. Defaults to 0.15.
-    n_voxels = meta['n_voxels'] # Number of voxels in a side of the grid. Whole grid is nxnxn. Defaults to 16.
-    gaussian_width = meta['gaussian_width'] # Width of the Gaussia kernel used for smoothing. Defaults to 1.75.
-    n_dims = meta['n_dims']
+    gt_file = os.path.join(config_arguments.input_pcl_folder, 'gt.txt')
+    if os.path.isfile(gt_file):
+        T = np.loadtxt(gt_file, dtype=float, delimiter=' ')
+    else:
+        T = None
+    voxel_grid = config_arguments.voxel_grid # Half size of the voxel grid in the unit of the point cloud. Defaults to 0.15.
+    n_voxels = config_arguments.n_voxels # Number of voxels in a side of the grid. Whole grid is nxnxn. Defaults to 16.
+    gaussian_width = config_arguments.gaussian_width # Width of the Gaussia kernel used for smoothing. Defaults to 1.75.
     # Load the descriptors and estimate the transformation parameters using RANSAC
-    ref_desc_file_name = os.path.join(ref_file_name[0], '{}_dim'.format(n_dims),
-                                      '{}_{:.6f}_{}_{:.6f}_3DSmoothNet.npz'.format(ref_file_name[1], voxel_grid, n_voxels, gaussian_width))
+    ref_desc_file_name = os.path.join(ref_file_name[0], '..', '{}_dim'.format(config_arguments.output_dim),
+                                      '{}_{:.6f}_{}_{:.6f}_3DSmoothNet.npy'.format(ref_file_name[1], voxel_grid, n_voxels, gaussian_width))
     reference_desc = np.load(ref_desc_file_name)
-    reference_desc = reference_desc['data']
-    test_desc_file_name = os.path.join(test_file_name[0], '{}_dim'.format(n_dims),
-                                      '{}_{:.6f}_{}_{:.6f}_3DSmoothNet.npz'.format(test_file_name[1], voxel_grid, n_voxels, gaussian_width))
+    print("Reference Descriptor File shape: " + str(reference_desc.shape))
+    # print(reference_desc)
+    # reference_desc = reference_desc['data']
+    test_desc_file_name = os.path.join(test_file_name[0], '..',  '{}_dim'.format(config_arguments.output_dim),
+                                      '{}_{:.6f}_{}_{:.6f}_3DSmoothNet.npy'.format(test_file_name[1], voxel_grid, n_voxels, gaussian_width))
     test_desc = np.load(test_desc_file_name)
-    test_desc = test_desc['data']
+    print("Test Descriptor File shape: " + str(test_desc.shape))
+    # test_desc = test_desc['data']
 
     # Save as open3d feature 
     ref = reg.Feature()
@@ -95,13 +96,16 @@ def main(config_arguments):
     test_key.points = o3d.utility.Vector3dVector(test_pc_keypoints)
 
     # First plot the original state of the point clouds
-    if config_arguments.visualize:
-        # Load reference point cloud
-        reference_pc.estimate_normals()
-        reference_pc.paint_uniform_color(FRAG1_COLOR)
-        test_pc.estimate_normals()
-        test_pc.paint_uniform_color(FRAG2_COLOR)
-        o3d.visualization.draw_geometries([reference_pc, test_pc, keypoints_to_spheres(ref_key, SPHERE_COLOR_1), keypoints_to_spheres(test_key, SPHERE_COLOR_2)])
+    # if config_arguments.visualize:
+    #     # Load reference point cloud
+    #     spacing = estimate_spacing(reference_pc)
+    #     temp_ref_ = copy.deepcopy(reference_pc)
+    #     temp_test_ = copy.deepcopy(test_pc)
+    #     temp_ref_.estimate_normals()
+    #     temp_ref_.paint_uniform_color(FRAG1_COLOR)
+    #     temp_test_.estimate_normals()
+    #     temp_test_.paint_uniform_color(FRAG2_COLOR)
+    #     # o3d.visualization.draw_geometries([temp_ref_, temp_test_, keypoints_to_spheres(ref_key, SPHERE_COLOR_1, spacing*5), keypoints_to_spheres(test_key, SPHERE_COLOR_2, spacing*5)])
 
     ref_matched_key, test_matched_key = find_mutually_nn_keypoints(
         ref_key, test_key, ref, test
@@ -109,12 +113,32 @@ def main(config_arguments):
     ref_matched_key = np.squeeze(ref_matched_key)
     test_matched_key = np.squeeze(test_matched_key)
 
+    # Visualize Correspondances
+    if config_arguments.visualize:
+        spacing = estimate_spacing(reference_pc)
+        temp_ref_ = copy.deepcopy(reference_pc)
+        temp_test_ = copy.deepcopy(test_pc)
+        temp_ref_.estimate_normals()
+        temp_ref_.paint_uniform_color(FRAG1_COLOR)
+        temp_test_.estimate_normals()
+        temp_test_.paint_uniform_color(FRAG2_COLOR)
+        stacked_points = np.hstack((ref_matched_key, test_matched_key))
+        lines = [[i, i+len(ref_matched_key.T)] for i in range(len(ref_matched_key.T))]
+        line_set = o3d.geometry.LineSet()
+        line_set.points = o3d.utility.Vector3dVector(stacked_points.T)
+        line_set.lines = o3d.utility.Vector2iVector(lines)
+        colors = [[1, 0, 0] for i in range(len(lines))] 
+        line_set.colors = o3d.utility.Vector3dVector(colors)
+        o3d.visualization.draw_geometries([temp_ref_, temp_test_, keypoints_to_spheres(ref_key, SPHERE_COLOR_1, spacing*5), keypoints_to_spheres(test_key, SPHERE_COLOR_2, spacing*5), line_set])
+
     est_mat, max_clique, dt = execute_teaser_global_registration(ref_matched_key, test_matched_key, config_arguments)
-    print("\nTEASER++ #correspondences:", len(ref_matched_key))
+    print("\nTEASER++ #correspondences:", len(ref_matched_key.T))
     print("TEASER++ transformation:\n", est_mat)
-    rot_error, trans_error = compute_transformation_diff(est_mat, T)
-    print("TEASER++ Rotation error (deg): ", rot_error)
-    print("TEASER++ Translation error (m): ", trans_error)
+    if T is not None:
+        print("True transformation:\n", T)
+        rot_error, trans_error = compute_transformation_diff(est_mat, T)
+        print("TEASER++ Rotation error (deg): ", rot_error)
+        print("TEASER++ Translation error (m): ", trans_error)
     # Plot point clouds after registration
     if config_arguments.visualize:
         draw_registration_result(reference_pc, test_pc,

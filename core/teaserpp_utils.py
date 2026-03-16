@@ -18,8 +18,6 @@ def find_mutually_nn_keypoints(ref_key, test_key, ref, test):
     test_features = test.data.T
     ref_keypoints = np.asarray(ref_key.points)
     test_keypoints = np.asarray(test_key.points)
-    n_samples = test_features.shape[0]
-    print("n samples: " + str(n_samples))
     ref_tree = KDTree(ref_features)
     test_tree = KDTree(test_features)
     test_NN_idx = ref_tree.query(test_features, return_distance=False)
@@ -34,7 +32,7 @@ def find_mutually_nn_keypoints(ref_key, test_key, ref, test):
 
     ref_matched_keypoints = ref_keypoints[ref_idx]
     test_matched_keypoints = test_keypoints[test_idx]
-    print("Number of matched keypoints: " + str(len(ref_idx)))
+    print("Number of matched keypoints: " + str(len(ref_idx)) + "\n")
 
     # # # find mutually closest points
     # ref_match_idx = np.nonzero(

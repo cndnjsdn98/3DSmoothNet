@@ -1,0 +1,2 @@
+--evaluation_batch_size=1000
+--output_dim=32
