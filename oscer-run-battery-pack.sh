@@ -18,15 +18,10 @@ cd -- "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 
 python ./compute_keypoints.py @./scripts/keypoints_config.txt @./scripts/battery_pack_meta.txt
 
-docker run --rm -it \
-  --gpus all \
-  --shm-size=16g \
-  --pid=host \
-  -e DISPLAY=$DISPLAY \
-  -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
-  -v "$(pwd)":/workspace/3dsmoothnet \
-  -w /workspace/3dsmoothnet \
-  3dsmoothnet:0.0.1 \
+singularity exec \
+  --bind "$(pwd)":/workspace/3dsmoothnet \
+  --pwd /workspace/3dsmoothnet \
+  /scratch/$USER/3dsmoothnet_sandbox \
   python ./compute_descriptors.py  @./scripts/descriptor_config.txt @./scripts/input_parametrization_config.txt @./scripts/battery_pack_meta.txt
 
 python ./perform_teaserpp.py @./scripts/input_parametrization_config.txt @./scripts/teaserpp_config.txt @./scripts/battery_pack_meta.txt

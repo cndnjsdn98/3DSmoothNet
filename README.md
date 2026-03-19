@@ -57,8 +57,11 @@ To get the correct cuda and cudnn version you can also use the following docker:
 
 We provide a cmake file that can be used to compile `main.cpp` as:
 ```shell
-cmake -DCMAKE_BUILD_TYPE=Release .
-make
+mkdir -p build
+cd build
+
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=11 -DCMAKE_CXX_STANDARD_REQUIRED=ON
+make -j"$(nproc)"
 ```
 which will create an executable `3DSmoothNet` that takes the following command line arguments:
 

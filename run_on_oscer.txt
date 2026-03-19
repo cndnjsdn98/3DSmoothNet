@@ -1,0 +1,43 @@
+rm -rf build
+mkdir build
+cd build
+
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=11 -DCMAKE_CXX_STANDARD_REQUIRED=ON
+make -j"$(nproc)"
+
+cp 3DSmoothNet ../
+
+
+singularity exec   --bind /home/$USER:/home/$USER   --bind /scratch/$USER:/scratch/$USER   /scratch/$USER/3dsmoothnet_sandbox   /bin/bash
+
+mkdir -p /scratch/$USER/tmp_singularity
+mkdir -p /scratch/$USER/.singularity_cache
+export SINGULARITY_TMPDIR=/scratch/$USER/tmp_singularity
+export SINGULARITY_CACHEDIR=/scratch/$USER/.singularity_cache
+export APPTAINER_TMPDIR=/scratch/$USER/tmp_singularity
+export APPTAINER_CACHEDIR=/scratch/$USER/.singularity_cachecd /scratch/$USER
+
+singularity build --sandbox /scratch/$USER/3dsmoothnet_sandbox \
+  docker-archive:///scratch/$USER/3dsmoothnet_image.tar
+
+singularity exec \
+  --nv \
+  --bind /home/$USER:/home/$USER \
+  --bind /scratch/$USER:/scratch/$USER \
+  /scratch/$USER/3dsmoothnet_sandbox \
+  /bin/bash
+
+
+singularity exec \
+  --bind "$(pwd)":/workspace/3dsmoothnet \
+  --pwd /workspace/3dsmoothnet \
+  /scratch/$USER/3dsmoothnet_sandbox \
+  python ./compute_descriptors.py \
+    @./scripts/descriptor_config.txt \
+    @./scripts/input_parametrization_config.txt \
+    @./scripts/battery_pack_meta.txt
+
+
+salloc -p gpu -N 1 -n 1 -c 4 --mem=16G -t 02:00:00 --gres=gpu:1
+squeue -u $USER
+srun --jobid=<jobid> --pty bash -l
