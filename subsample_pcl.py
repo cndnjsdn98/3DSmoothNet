@@ -11,6 +11,7 @@ from core import config
 FRAG_ORIGINAL = [1.0, 0.75, 0.0]    # Yellow
 FRAG_SMOOTH = [0, 0.629, 0.9]       #Blue
 
+
 def main(config_arguments):
     # Run the input parametrization
     point_cloud_files = glob.glob(config_arguments.input_pcl_folder + '*.ply')
@@ -24,19 +25,33 @@ def main(config_arguments):
         print("Loaded: " + pc_file)
         pc_original = copy.deepcopy(pc).translate((0, 1000, 0))
 
+        # Downsample
         pc = pc.voxel_down_sample(voxel_size=config_arguments.voxel_size)  
+
+        # Remove floor plane
+        plane_model, inliers = pc.segment_plane(
+            distance_threshold=config_arguments.distance_threshold,
+            ransac_n=config_arguments.ransac_n,
+            num_iterations=config_arguments.num_iterations
+        )
+        pc = pc.select_by_index(inliers, invert=True)
+
+        # Remove outliers
         pc = pc.remove_non_finite_points()
         pc, ind = pc.remove_statistical_outlier(
             nb_neighbors=config_arguments.nb_neighbors,
             std_ratio=config_arguments.std_ratio
         )
+
+        print("Subsampled " + pc_file + "with Voxel Size: " + str(config_arguments.voxel_size))
+
         if config_arguments.visualize:
-            pc.estimate_normals()
-            pc.paint_uniform_color(FRAG_SMOOTH)
-            pc_original.estimate_normals()
-            pc_original.paint_uniform_color(FRAG_ORIGINAL)
-            print("\\a")
-            sys.stdout.flush()
+            # pc.estimate_normals()
+            # pc.paint_uniform_color(FRAG_SMOOTH)
+            # pc_original.estimate_normals()
+            # pc_original.paint_uniform_color(FRAG_ORIGINAL)
+            # print("\\a")
+            # sys.stdout.flush()
             o3d.visualization.draw_geometries([pc, pc_original])
 
         pc_file_name = os.path.basename(pc_file)
@@ -48,6 +63,8 @@ def main(config_arguments):
             compressed=False,    # Keep standard binary if desired
             print_progress=True  # Optional: show a progress bar
         )
+        print("Subsampled file saved to: " + voxel_pc_dir)
+        
 if __name__ == "__main__":
     # Parse configuration
     config_arguments, unparsed_arguments = config.get_config()

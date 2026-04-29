@@ -72,10 +72,10 @@ def main(config_arguments):
         ref_key = keys[point_cloud_files[0]]
         test_pc = pcls[point_cloud_files[1]]
         test_key = keys[point_cloud_files[1]]
-        reference_pc.estimate_normals()
-        reference_pc.paint_uniform_color(FRAG1_COLOR)
-        test_pc.estimate_normals()
-        test_pc.paint_uniform_color(FRAG2_COLOR)
+        # reference_pc.estimate_normals()
+        # reference_pc.paint_uniform_color(FRAG1_COLOR)
+        # test_pc.estimate_normals()
+        # test_pc.paint_uniform_color(FRAG2_COLOR)
         o3d.visualization.draw_geometries([reference_pc, test_pc, keypoints_to_spheres(ref_key, SPHERE_COLOR_1, 3), keypoints_to_spheres(test_key, SPHERE_COLOR_2, 3)])
 
 if __name__ == "__main__":

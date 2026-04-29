@@ -14,7 +14,7 @@ cd -- "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 #   -w /workspace/3dsmoothnet \
 #   teaserpp:0.0.1 \
 
-# python ./subsample_pcl.py @./scripts/downsample_config.txt @./scripts/keypoints_config.txt @./scripts/battery_pack_meta.txt
+python ./subsample_pcl.py @./scripts/downsample_config.txt @./scripts/keypoints_config.txt @./scripts/battery_pack_meta.txt
 
 python ./compute_keypoints.py @./scripts/keypoints_config.txt @./scripts/battery_pack_meta.txt
 

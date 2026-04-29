@@ -29,6 +29,10 @@ downsample_arg = add_argument_group("Downsample")
 downsample_arg.add_argument("--voxel_size", type=float, default=3)
 downsample_arg.add_argument("--nb_neighbors", type=int, default=1000)
 downsample_arg.add_argument("--std_ratio", type=float, default=1.5)
+downsample_arg.add_argument("--distance_threshold", type=float, default=0.5)
+downsample_arg.add_argument("--ransac_n", type=int, default=3)
+downsample_arg.add_argument("--num_iterations", type=int, default=1000)
+
 
 # -----------------------------------------------------------------------------
 # Keypoints
